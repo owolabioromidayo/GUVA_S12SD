@@ -11,7 +11,7 @@ void get_uv_values(void)
   guva_s12sd_t sensor = guva_s12sd_init_desc(ADC_CHANNEL_0, 3.3, 50);
 
   int uv;
-  if (guva_s12sd_read_uv_index(&sensor, &uv) == ESP_OK)
+  if (guva_s12sd_read_uv_index(&sensor, &uv))
   {
     printf("UV Index: %d \n", uv);
     return;
