@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <esp_err.h>
 #include <stdlib.h>
-#include "drivers/adc.h"
+#include "driver/adc.h"
 #include "esp_adc_cal.h"
 
 #ifdef __cplusplus
@@ -32,7 +32,7 @@ typedef struct
 guva_s12sd_t guva_s12sd_init_desc(int pin, float vin, int sample_count);
 
 /**
- * @brief Get raw voltage from device
+ * @brief Get raw voltage from device (mV)
  * *
  * @param dev Device descriptor
  * @param out Raw Voltage 

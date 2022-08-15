@@ -6,8 +6,8 @@
 
 #include "guva_s12sd.h"
 
-#define VOLTAGE_CUTOFF_LOW 1000
-#define VOLTAGE_CUTOFF_HIGH 2250 
+#define VOLTAGE_CUTOFF_LOW 0 
+#define VOLTAGE_CUTOFF_HIGH 1100
 #define VOLTAGE_MULT_FACTOR 1.0
 
 static const char *TAG = "guva_s12sd";
@@ -26,7 +26,7 @@ static bool init_adc(guva_s12sd_t *dev)
     {
         calib_enable = true;
         // MEASURING RANGES FOR ADC_ATTEN_DB_11  150 mV ~ 2450 mV. We only need 0 - 1000mV for our sensor.
-        esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_10, 0, dev->calib_chars);
+        esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_10, 0, &dev->calib_chars);
         ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_10));
         ESP_ERROR_CHECK(adc1_config_channel_atten(dev->channel, ADC_ATTEN_DB_11));
     }
@@ -37,7 +37,7 @@ static bool init_adc(guva_s12sd_t *dev)
 }
 
 
-guva_s12sd_t guva_s12sd_init_desc(int pin, float vin, int sample_count);
+guva_s12sd_t guva_s12sd_init_desc(int pin, float vin, int sample_count)
 {
     guva_s12sd_t dev; 
     dev.channel = pin;
@@ -57,24 +57,24 @@ esp_err_t guva_s12sd_read_analog(guva_s12sd_t *dev, float *out)
     int curr_voltage_reading_raw = 0;
     uint32_t curr_voltage_reading = 0;
     
-    for (int i = 0; i <; ++i)
-        adc1_get_raw(adc_battery_channel); //take garbage readings, warm up ADC, sleep
+    for (int i = 0; i <dev->sample_count; ++i)
+        adc1_get_raw(dev->channel); //take garbage readings, warm up ADC, sleep
 
-    if(!cali_enable)
+    if(!calib_enable)
         return 0;
 
     for (int i = 0; i < dev->sample_count; ++i)
     {
         curr_voltage_reading_raw = adc1_get_raw(dev->channel);
-        curr_voltage_reading =  esp_adc_cal_raw_to_voltage(curr_voltage_reading_raw, dev->calib_chars);
+        curr_voltage_reading =  esp_adc_cal_raw_to_voltage(curr_voltage_reading_raw, &dev->calib_chars);
         
-        if ( VOLTAGE_CUTOFF_LOW <= curr_voltage_reading && curr_voltage_reading<= VOLTAGE_CUTOFF_HIGH)
+        if ( VOLTAGE_CUTOFF_LOW <= curr_voltage_reading && curr_voltage_reading <= VOLTAGE_CUTOFF_HIGH)
             voltage_readings += curr_voltage_reading;
         else 
             i--;    
     }
     
-    float avg_voltage = (VOLTAGE_MULT_FACTOR * voltage_readings) / (dev->sample_count*1000);
+    float avg_voltage = (VOLTAGE_MULT_FACTOR * voltage_readings) / (dev->sample_count);
     *out = avg_voltage; 
     return 1;
 
